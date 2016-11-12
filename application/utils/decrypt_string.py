@@ -11,7 +11,7 @@ def decrypt_string(input_str):
     
     key = hashlib.sha256(password).digest()
 
-    IV = 16 * '\x00'           # Initialization vector: discussed later
+    IV = 16 * '\x00'           
     mode = AES.MODE_CBC
    
     ciphertext = input_str
