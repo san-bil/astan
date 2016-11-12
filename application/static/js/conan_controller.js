@@ -122,6 +122,9 @@ function change_variable() {
   $("#slider").addClass(variable);
   $("#dimension").append(variable);
   $( "#slider" ).slider( "value", 0 );
+  clear_chart_state();
+  add_anno_graph();
+
 }
 
 function change_video() {
@@ -153,7 +156,14 @@ function change_video() {
       clearInterval(playing_sync_callback_id);
       console.log("paused");
     });
+
+
   },1000);
+  $("#video").on("canplay",function() {
+    console.log("canplay");
+    clear_chart_state();
+    add_anno_graph();
+  });    
 }
 
 video_duration = null;
@@ -414,6 +424,7 @@ my_colours = rgbColors(numColours);
 
 function clear_chart_state(){
   $('#chart').empty();
+  $('#legend').empty();
   graph=0;
   active_series_id=null;
   active_series=[];
@@ -441,14 +452,15 @@ function add_anno_graph(){
   var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
 
   my_series = [];
+
+  dummy_data = interp_series([{x:0,y:0},{x:get_video_duration_secs(),y:0}],0.05);
+  my_series.push({color:"#000000",data:dummy_data,name:'placeholder (ignore)'});
+
   
   for(var j=0;j<seriesData.length;j++){
     my_series.push({color:get_color(j+1),data:seriesData[j],name:interval_ids_reverse[j]});
   }
 
-  dummy_data = interp_series([{x:0,y:0},{x:get_video_duration_secs(),y:0}],0.05);
-
-  my_series.push({color:"#000000",data:dummy_data,name:'placeholder (ignore)'});
 
   graph = new Rickshaw.Graph( {
     element: document.getElementById("chart"),
@@ -575,9 +587,11 @@ $(function(){
   // $( "#videodropdown" ).change(add_anno_graph);
   // add_anno_graph();
   
-  $("#video").get(0).addEventListener("canplay",function() {
-    add_anno_graph();
-  });
+  // $("#video").get(0).addEventListener("canplay",function() {
+  //   print("canplay")
+  //   clear_chart_state();
+  //   add_anno_graph();
+  // });
 
 
 
@@ -603,7 +617,7 @@ $(function(){
     slide: on_slider_change,
     change: on_slider_change,
     start: start_annotating,
-    width: 600,
+    width: '600',
 
   });
 
