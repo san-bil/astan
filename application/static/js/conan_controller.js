@@ -254,10 +254,13 @@ fetch_annos_from_server = function() {
 
 last_point_added=null;
 on_slider_change = function(e, ui) {
-  add_to_buffer();
+  if(!($("#video").get(0).paused)){
+    add_to_buffer();    
+  }
 };
 
 function add_to_buffer(){
+  print('add_to_buffer()')
   var dimension = get_variable_selection();
   var videoName = get_video_selection();
   var subject = get_subject();
@@ -368,12 +371,13 @@ function annos_to_series(annos){
 function add_dummy_annotation(){
     var videotime = $("#video").get(0).currentTime;
     var annotation_value = $( "#slider" ).slider( "value");
-    
-    update_anno_graph(videotime, annotation_value)
+    print('add_dummy_annotation()');
+    update_anno_graph(videotime, annotation_value);
     set_graph_window(get_video_timepoint());
 }
 
 function add_annotation_event(){
+  print('add_annotation_event()');
   add_to_buffer();
 }
 
@@ -414,6 +418,7 @@ function set_graph_window(videotime){
 }
 
 function update_anno_graph(videotime, annotation_value){
+  print('update_anno_graph()');
   seriesData[seriesData.length-1].push({ x: videotime, y: annotation_value });
 }
 
