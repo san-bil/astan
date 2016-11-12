@@ -4,6 +4,7 @@
       <div class="masthead">
         <ul class="nav nav-pills pull-right">
           {% if username|length > 1 %}
+            <li><a href="/change_password">Change password</a></li>
             <li><a href="/home">{{ username }}</a></li>
             <li><a href="/logout">Logout</a></li>
           {% endif %}
