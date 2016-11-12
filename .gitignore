@@ -1,4 +1,5 @@
 .DS_Store
 *.pyc
 *.db
+*twistd.pid
 application/data/

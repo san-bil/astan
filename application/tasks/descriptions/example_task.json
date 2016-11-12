@@ -2,17 +2,16 @@
   [
 	{
 	  "task_name": "example_task_conan",
-	  "data_source_name": "astan_example_videos",
+	  "data_source_name": "astan_test_videos",
 	  "task_details": 
 	  	{
 	  		"type":"continuous_annotation",
 	  		"variables": ["valence","arousal","agreement"]
   		},
 	  "video_list": [
-		"1.mp4",
-        "2.mp4",
-        "3.mp4",
-        "4.mp4"
+		"JFK.mp4",
+        "Obama.mp4",
+        "Obama2.mp4"
 	  ]
 	}
   ]
