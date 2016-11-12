@@ -110,22 +110,25 @@ def write_json_annos(subj, videoname, task_name, obj):
         json.dump(obj, outfile)
 
 
-
+conan_csv_order=['clienttime',
+                 'subject',
+                 'video',
+                 'dimension',
+                 'time',
+                 'value',
+                 'playing',
+                 'interval_id']
 
 @app.route('/push_csv_annos', methods=['POST'])
 @login_required
 def push_csv_annos():
     subj = request.args.get('subject')
     task_name = request.args.get('task_name')
-
     chunk = ""
     tmp=request.get_json();
-    mybuffer=tmp["buffer"]
-    for obj in mybuffer:
+    for obj in tmp["buffer"]:
         formattedDate = datetime.datetime.now().strftime("\"%A, %B %d, %Y, %I:%M:%S %p\"")
-        chunk_p1 = chunk + formattedDate + ','
-        chunk_p2 = chunk_p1 + ','.join([ str(obj[k]) for k in obj.viewkeys()]) + "\n"
-        chunk = chunk_p2
+        chunk += formattedDate + ',' + ','.join([ str(obj[k]) for k in conan_csv_order]) + "\n"
         videoname=obj['video']
         dimension=obj['dimension']
     write_csv_chunk(subj,videoname,dimension, task_name, chunk)
@@ -146,13 +149,52 @@ def write_csv_chunk(subj, videoname, dimension, task_name, csv):
 
     outfile.close()
 
+@app.route('/fetch_csv_annos', methods=['POST','GET'])
+@login_required
+def fetch_csv_annos():
+    subj = request.args.get('subject')
+    task_name = request.args.get('task_name')
+    videoname = request.args.get('video')
+    dimension = request.args.get('dimension')
+    try:
+        csv_annos = json.dumps(read_csv(subj, videoname, dimension, task_name))
+    except Exception as err:
+        csv_annos = json.dumps([])
+    user = flask.ext.login.current_user
+    print user.email + " : /fetch_csv_annos : "+task_name+", "+videoname
+
+    return csv_annos
+
+import csv
+def read_csv(subj, videoname, dimension, task_name):
+    data_sink = app.config['DATA_SINK']
+    subj_results_dir = os.path.join(data_sink,task_name, subj)
+    ensure_dir(subj_results_dir)
+
+    results_file_name = os.path.join(subj_results_dir,videoname + '-' + dimension + ".csv")
+    conan_csv_order_trunc=[el for el in conan_csv_order if el not in ['clienttime','subject','server_receive_time']]
+    
+    conan_csv_fieldnames=['server_receive_time',
+                 'clienttime',
+                 'subject',
+                 'video',
+                 'dimension',
+                 'time',
+                 'value',
+                 'playing',
+                 'interval_id']
+
+    with open(results_file_name,'r') as outfile:
+        csv_lines = csv.DictReader(outfile,fieldnames=conan_csv_fieldnames)
+        json_dict_list=[]
+        for csvl in csv_lines:
+            tmp_dict={i:csvl[i] for i in conan_csv_order_trunc}
+            if(tmp_dict['playing']=='True'):
+                json_dict_list.append(tmp_dict)
+
+    return json_dict_list
 
 
-
-#for jnk in usermaps:
-#  print jnk["email"]
-#  print jnk["tasks"]
-#print "#"*20
 
 def get_user_tasks(user):
     for usermap in usermaps:
