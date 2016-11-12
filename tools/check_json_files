@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo -e "\n----\n"
+
+parent_dir=$(dirname $0)
+
+for f in $(find $1 -type f -iwholename "*.json"); do 
+	python $parent_dir/check_json_file.py $f;
+    echo -e "\n----\n"
+done
