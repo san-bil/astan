@@ -24,6 +24,7 @@ Use the requirements.txt to install dependencies (try to use conda/virtualenv):
 ~~~ sh
 $ apt-get install python-dev
 $ conda create -n astan python=2.7
+$ source activate astan
 $ pip install -r requirements/astan_reqs.txt
 ~~~
 
