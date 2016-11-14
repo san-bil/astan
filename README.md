@@ -31,7 +31,7 @@ $ pip install -r requirements/astan_reqs.txt
 Change default_settings.py to define defaults for:
 * where to find taskdefs
 * where to store data
-* authentication details for AstAn's email.
+* authentication details for the AstAn server's email account.
 
 Change runserver.py to define:
 * what port to run on
