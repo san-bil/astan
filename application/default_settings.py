@@ -2,7 +2,7 @@ import os, random, logging, getpass
 from utils.decrypt_string import decrypt_string
 # Get application base dir.
 _basedir = os.path.abspath(os.path.dirname(__file__))
-from utils.interactive import check_default
+from utils.interactive import check_default, bool_input
 from utils.log_setup import setup_experiment_logging
 
 global_log_file_path = setup_experiment_logging()
@@ -19,16 +19,14 @@ SECURITY_CHANGEABLE = True
 SECURITY_CHANGE_URL = '/change_password'
 SECURITY_REGISTERABLE = True
 SECURITY_PASSWORD_HASH = 'bcrypt'
+SECURITY_RESET_URL = '/reset_password'
+SECURITY_RECOVERABLE = False
+SECURITY_EMAIL_SENDER = "*An"
+SECURITY_CONFIRMABLE = bool_input('\n\nForce account confirmation?')
 
-# Change settings for AstAn's email account. 
 MAIL_SERVER = 'smtp.gmail.com'
 MAIL_PORT = 465
 MAIL_USE_SSL = True
-SECURITY_CONFIRMABLE = True
-SECURITY_RECOVERABLE = True
-SECURITY_RESET_URL = '/reset_password'
-SECURITY_EMAIL_SENDER = "*An"
-
 MAIL_USERNAME = 'astan.annotation.app'
 MAIL_USERNAME = check_default(MAIL_USERNAME,
                          "Is this the username (omitting @domain) for the server's email account?"+prompt_suffix % MAIL_USERNAME,
@@ -36,7 +34,6 @@ MAIL_USERNAME = check_default(MAIL_USERNAME,
                          "Please enter alternative username: ")
 MAIL_PASSWORD = getpass.getpass('Password for AstAn email account: ')
 print('\n\n\n')
-
 
 #####  Verify locations from where to fetch taskdefs and store resulting data
 reject_prompt="Please enter alternative location: "
