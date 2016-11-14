@@ -13,6 +13,20 @@
         "Obama.mp4",
         "Obama2.mp4"
 	  ]
+	},
+	{
+	  "task_name": "example_task_evan",
+	  "data_source_name": "astan_test_videos",
+	  "task_details": 
+	  	{
+	  		"type":"segmentation",
+	  		"events": ["human_on_screen","talking","camera_motion"]
+  		},
+	  "video_list": [
+		"JFK.mp4",
+        "Obama.mp4",
+        "Obama2.mp4"
+	  ]
 	}
   ]
 }
