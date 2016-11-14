@@ -42,6 +42,14 @@ Start the server:
 $ python runserver.py
 ~~~
 
+To run the examples provided as is, start the simple streaming video server with:
+~~~ sh
+$ pip install twisted
+$ ./example_video_server/run_video_server.sh
+~~~
+
+Then go to http://localhost:8080 in your browser.
+
 Event Annotator (EvAn)
 ---
 <img src="https://cloud.githubusercontent.com/assets/1110545/20281290/daf9406a-aaa7-11e6-8d9d-5e237e21a5e6.png" style="width:100; height:100"/>
