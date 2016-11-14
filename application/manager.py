@@ -1,15 +1,10 @@
 from application import app, db, usermaps, task_defs
-from flask import render_template, redirect
+from flask import render_template, redirect, request
 from application.models import *
 from flask.ext.security import login_required
-import flask_security.core
-from flask import request
-import flask.ext.login
-from flask import request
-import os
-import json
-import datetime
-
+import flask_security.core, flask.ext.login
+import os, json, datetime, shutil
+from utils.file_system import create_increment_file
 
 @app.route('/')
 @app.route('/index/')
@@ -117,7 +112,8 @@ conan_csv_order=['clienttime',
                  'time',
                  'value',
                  'playing',
-                 'interval_id']
+                 'interval_id',
+                 'isdeleted']
 
 @app.route('/push_csv_annos', methods=['POST'])
 @login_required
@@ -127,6 +123,7 @@ def push_csv_annos():
     chunk = ""
     tmp=request.get_json();
     for obj in tmp["buffer"]:
+        obj['isdeleted']=False
         formattedDate = datetime.datetime.now().strftime("\"%A, %B %d, %Y, %I:%M:%S %p\"")
         chunk += formattedDate + ',' + ','.join([ str(obj[k]) for k in conan_csv_order]) + "\n"
         videoname=obj['video']
@@ -148,6 +145,66 @@ def write_csv_chunk(subj, videoname, dimension, task_name, csv):
         outfile.write(csv)
 
     outfile.close()
+
+@app.route('/del_csv_annos', methods=['POST'])
+@login_required
+def del_csv_annos():
+    subj = request.args.get('subject')
+    videoname = request.args.get('video')
+    task_name = request.args.get('task_name')
+    dimension = request.args.get('dimension')
+    json_data = request.get_json()
+    print(json_data)
+    interval_id = json_data['interval_id']
+    filter_handle = lambda csvl: csvl['interval_id']==interval_id and csvl['dimension']==dimension
+
+    filter_csv(subj, videoname, dimension, task_name,filter_handle)
+
+    user = flask.ext.login.current_user
+    print user.email + " : /del_csv_annos : "+task_name+", "+videoname
+    return "success"
+
+import csv
+conan_csv_fieldnames=['server_receive_time',
+                     'clienttime',
+                     'subject',
+                     'video',
+                     'dimension',
+                     'time',
+                     'value',
+                     'playing',
+                     'interval_id',
+                     'isdeleted']
+
+def filter_csv(subj, videoname, dimension, task_name, filter_handle):
+    data_sink = app.config['DATA_SINK']
+    subj_results_dir = os.path.join(data_sink,task_name, subj)
+    ensure_dir(subj_results_dir)
+
+    results_file_name = os.path.join(subj_results_dir,videoname + '-' + dimension + ".csv")
+    tmp_results_file_name = os.path.join(subj_results_dir,videoname + '-' + dimension + ".csv.tmp")
+
+    with open(results_file_name,'r') as infile:
+        with open(tmp_results_file_name, 'w') as outfile:
+
+            csv_lines_in = csv.DictReader(infile,fieldnames=conan_csv_fieldnames)
+            csv_lines_out = csv.DictWriter(outfile, fieldnames=conan_csv_fieldnames)
+            csv_lines_out.writeheader()
+
+            for csvl in csv_lines_in:
+                csvl_filtered=csvl
+                if(filter_handle(csvl)):
+                    csvl_filtered['isdeleted']='True'
+
+                csv_lines_out.writerow(csvl_filtered)
+    results_file_name_bak = create_increment_file(os.path.basename(results_file_name), 
+                              os.path.dirname(results_file_name), 
+                              ext='bak',
+                              dont_touch=True)[0]
+    shutil.move(results_file_name, results_file_name_bak)
+    shutil.move(tmp_results_file_name, results_file_name)
+    
+
 
 @app.route('/fetch_csv_annos', methods=['POST','GET'])
 @login_required
@@ -173,23 +230,13 @@ def read_csv(subj, videoname, dimension, task_name):
 
     results_file_name = os.path.join(subj_results_dir,videoname + '-' + dimension + ".csv")
     conan_csv_order_trunc=[el for el in conan_csv_order if el not in ['clienttime','subject','server_receive_time']]
-    
-    conan_csv_fieldnames=['server_receive_time',
-                 'clienttime',
-                 'subject',
-                 'video',
-                 'dimension',
-                 'time',
-                 'value',
-                 'playing',
-                 'interval_id']
 
-    with open(results_file_name,'r') as outfile:
-        csv_lines = csv.DictReader(outfile,fieldnames=conan_csv_fieldnames)
+    with open(results_file_name,'r') as infile:
+        csv_lines = csv.DictReader(infile,fieldnames=conan_csv_fieldnames)
         json_dict_list=[]
         for csvl in csv_lines:
             tmp_dict={i:csvl[i] for i in conan_csv_order_trunc}
-            if(tmp_dict['playing']=='True'):
+            if(tmp_dict['playing']=='True' and tmp_dict['isdeleted']=='False'):
                 json_dict_list.append(tmp_dict)
 
     return json_dict_list

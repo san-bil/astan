@@ -3,6 +3,9 @@ maxBufferSize = 15;
 
 new_video_flag=0;
 
+
+
+
 var rgbColors = function(t) {
   t = parseInt(t);
   if (t < 2)
@@ -67,6 +70,12 @@ function get_annotations_fetch_endpoint(subject, videoName, task_name, annotatio
   return annotations_fetch_endpoint
 }
 
+function get_annotations_delete_endpoint(subject, videoName, task_name, annotation_variable){
+  var annotations_fetch_endpoint = "/del_csv_annos?subject=" + subject + "&video=" + videoName + "&task_name=" + task_name + "&dimension=" + annotation_variable
+  return annotations_fetch_endpoint
+}
+
+
 function get_variable_selection(){
   var variable = $('#variabledropdown>option:selected').text();
   return variable;
@@ -122,7 +131,6 @@ function change_variable() {
   $("#slider").addClass(variable);
   $("#dimension").append(variable);
   $( "#slider" ).slider( "value", 0 );
-  clear_chart_state();
   add_anno_graph();
 
 }
@@ -161,7 +169,6 @@ function change_video() {
   },1000);
   $("#video").on("canplay",function() {
     console.log("canplay");
-    clear_chart_state();
     add_anno_graph();
   });    
 }
@@ -204,7 +211,8 @@ send_buffer_to_server = function() {
   var video_name = get_video_selection();
   var endpoint = get_annotations_push_endpoint(subject, video_name, task_name);
   var data_to_send = JSON.stringify({'buffer':tosend});
-  outbound_request = $.ajax({
+  
+  var outbound_request = $.ajax({
     type: 'post',
     url: endpoint,
     dataType: 'json',
@@ -229,7 +237,7 @@ fetch_annos_from_server = function() {
   var video_name = get_video_selection();
   var endpoint = get_annotations_fetch_endpoint(subject, video_name, task_name,annotation_variable)
 
-  outbound_request = $.ajax({
+  var outbound_request = $.ajax({
     type: 'post',
     url: endpoint,
     async: false,
@@ -251,6 +259,46 @@ fetch_annos_from_server = function() {
   });
   return fetched_annotations;
 };
+
+delete_annos_from_server = function() {
+  var interval_id_to_delete=$('#deleter_dropdown').val();
+  var annotation_variable = get_variable_selection();
+  var subject = get_subject();
+  var task_name = get_taskname();
+  var video_name = get_video_selection();
+  var endpoint = get_annotations_delete_endpoint(subject, video_name, task_name,annotation_variable);
+  var tmp = {interval_id:interval_id_to_delete}
+  var data_to_send = JSON.stringify(tmp);
+  print(tmp)
+  print(data_to_send);
+  var outbound_request = $.ajax({
+    type: 'post',
+    url: endpoint,
+    async: false,
+    dataType: 'json',
+    data: data_to_send,
+    contentType: 'application/json',
+    success: function(data) {
+      console.log('delete success')
+      $("#deleter_dropdown option[value='"+interval_id_to_delete+"']").remove();
+      $("#invalidated_notifier").text('Interval invalidated.')
+      setInterval(function(){$("#invalidated_notifier").fadeOut("slow");add_anno_graph();},1500)
+
+    }
+    //dataType: 'json',
+    //contentType: 'application/json',
+    //data: JSON.stringify({buffer:tosend}),
+  });
+
+  outbound_request.fail(function( jqXHR, textStatus, errorThrown ) {
+    console.log(errorThrown);
+    if(jqXHR.status==200){
+    }else{
+      alert("Can't delete annotations from server right now. Email the admin to ask what's wrong. Press Ctrl+Shift+J in chrome and attach a screenshot.");
+    }
+  });
+};
+
 
 last_point_added=null;
 on_slider_change = function(e, ui) {
@@ -354,19 +402,30 @@ function annos_to_series(annos){
       }
       interval_id_idx=interval_ids[interval_id];
 
-      tmp_seriesData[interval_id_idx].push({ x: parseFloat(annos[i].time), y: parseFloat(annos[i].value) });  
+      tmp_seriesData[interval_id_idx].push({ x: parseFloat(annos[i].time), y: parseFloat(annos[i].value) });
     }
 
     for(var i=0;i<tmp_seriesData.length;i++){
+      
       temporal_spacing=0.1;
       seriesData[i] = interp_series(tmp_seriesData[i],temporal_spacing);
       //seriesData[i] = tmp_seriesData[i];
     }
-
     // if(seriesData.length==0){
     //   seriesData.push([{x: 0, y: 0}]);
     // }
 }
+
+function add_deleter_options(){
+  var interval_ids_keys=Object.keys(interval_ids);;
+  for(var i=0;i<interval_ids_keys.length;i++){
+    var iids_key = interval_ids_keys[i];
+    var tmp = {};
+    tmp[iids_key]=iids_key;
+    add_options_to_dropdown('deleter_dropdown',tmp);
+  }
+}
+
 
 function add_dummy_annotation(){
     var videotime = $("#video").get(0).currentTime;
@@ -387,6 +446,9 @@ function start_annotating(){
 
   active_series_id=get_current_datetime()+"@"+video_time.toString();
   create_new_interval(active_series_id);
+  tmp={}
+  tmp[active_series_id]=active_series_id;
+  add_options_to_dropdown('deleter_dropdown',tmp);
   active_series_idx=interval_ids[active_series_id];
   my_series.push({color:get_color(active_series_idx+1),data:seriesData[active_series_idx],name:active_series_id});
 
@@ -428,6 +490,7 @@ numColours=15;
 my_colours = rgbColors(numColours);
 
 function clear_chart_state(){
+  print('clear_chart_state()');
   $('#chart').empty();
   $('#legend').empty();
   graph=0;
@@ -437,11 +500,8 @@ function clear_chart_state(){
   interval_ids={};
   interval_ids_reverse={};
   dummy_data_callback_id=null;
-
-  interval_ids = {};
-  interval_ids_reverse = {};
-  interval_ids_ctr=0
-
+  interval_ids_ctr=0;
+  clear_dropdown('deleter_dropdown');
 }
 
 function get_color(idx){
@@ -450,9 +510,11 @@ function get_color(idx){
 }
 
 function add_anno_graph(){
+  print('add_anno_graph()');
   clear_chart_state();
   annos = fetch_annos_from_server();
   annos_to_series(annos);
+  add_deleter_options();
 
   var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
 
@@ -575,7 +637,21 @@ function redraw_legend(){
       graph: graph,
       element: document.getElementById('legend')
   });
+}
 
+function add_options_to_dropdown(dropdown_id, options_map){
+  var mySelect = $('#'+dropdown_id);
+
+
+  $.each(options_map, function(val, text) {
+      mySelect.append(
+          $('<option></option>').val(text).html(text)
+      );
+  });
+}
+
+function clear_dropdown(dropdown_id, options_map){
+  $('#'+dropdown_id).empty();
 }
 
 
@@ -588,11 +664,12 @@ $(function(){
   $( "#variabledropdown" ).change(change_variable);
   change_variable();
 
-  $( "#variabledropdown" ).change(add_anno_graph);
+  $( "#deleter_button" ).click(delete_annos_from_server);
+  //$( "#variabledropdown" ).change(add_anno_graph);
   // $( "#videodropdown" ).change(add_anno_graph);
   // add_anno_graph();
   
-  // $("#video").get(0).addEventListener("canplay",function() {
+  // $("#video").get(0).addEventLis  tener("canplay",function() {
   //   print("canplay")
   //   clear_chart_state();
   //   add_anno_graph();

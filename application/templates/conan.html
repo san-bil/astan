@@ -27,14 +27,14 @@
     <div id="controls">
 
       <div class="formelem" class="styled-select">
-        <select id="videodropdown" >
+        <select id="videodropdown" class="data_dropdown">
           {% for vid in task_def['video_list'] %}
           <option value="//{{ task_def['data_uri'] }}/{{ vid }}">{{ vid }}</option>
           {% endfor %}
         </select>
 
 
-        <select id="variabledropdown">
+        <select id="variabledropdown" class="data_dropdown">
           {% for variable in task_def['task_details']['variables'] %}
           <option value="{{ variable }}">{{ variable }}</option>
           {% endfor %}
@@ -111,9 +111,17 @@
           </div>
  -->        </section>
       </form>
+
+
+
     </div>
 
-
+    <div>
+      <select id="deleter_dropdown" class="deleter_dropdown">
+      </select>
+      <button id="deleter_button" class="deleter_button">Invalidate</button>
+      <span id="invalidated_notifier" style="color:red; font-size:15"></span>
+    </div>
 
   </div>
 
@@ -121,20 +129,6 @@
 
 </body>
 
-
 </html>
-
-
-
-
-
-<script>
-  // subject = "sanjay_annemo_test_account"
-  // video = "http://146.169.15.13/greekTV/greekTV_all/P1_20111031_seq1.mp4"
-  // videoName = "P1_20111031_seq1.mp4"
-  // dimension = "arousal"
-  </script>
-
-
 
 
