@@ -13,10 +13,12 @@ Requirements
 Getting started
 ---
 
-Clone the repo to your computer in the desired folder:
+Clone the required repos to your server in the desired folder:
 
 ~~~ sh
 $ git clone https://github.com/san-bil/astan.git
+$ cd astan
+$ git clone git@github.com:san-bil/rickshaw.git ./application/static/js/rickshaw
 ~~~
 
 Use the requirements.txt to install dependencies (try to use conda/virtualenv):
