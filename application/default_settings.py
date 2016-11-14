@@ -13,14 +13,16 @@ DEBUG = True
 RELOAD = True
 SECRET_KEY = 'mysecretkeyvalue'
 
+
 SECURITY_TRACKABLE = True
 SECURITY_POST_LOGIN_VIEW = '/home'
 SECURITY_CHANGEABLE = True
 SECURITY_CHANGE_URL = '/change_password'
 SECURITY_REGISTERABLE = True
 SECURITY_PASSWORD_HASH = 'bcrypt'
+SECURITY_PASSWORD_SALT = 'astan_is_awesome_and_you_should_totally_use_it_and_cite'
 SECURITY_RESET_URL = '/reset_password'
-SECURITY_RECOVERABLE = False
+SECURITY_RECOVERABLE = True
 SECURITY_EMAIL_SENDER = "*An"
 SECURITY_CONFIRMABLE = bool_input('\n\nForce account confirmation?')
 
